@@ -8,11 +8,11 @@ App instalable para manejar la tienda: productos por etapa, calculadora de preci
 
 ## Publicar en GitHub Pages
 
-En el repositorio: **Settings → Pages → Deploy from a branch → main → / (root) → Save**. En uno o dos minutos queda en `https://TU-USUARIO.github.io/zunko/`.
+En el repositorio: **Settings → Pages → Deploy from a branch → main → / (root) → Save**. En uno o dos minutos queda en `https://TU-USUARIO.github.io/Zunko/`.
 
 ## Instalar en el PC (Windows)
 
-1. Abre `https://cristiancamiloosuna-oss.github.io/zunko/` en **Edge** o **Chrome**.
+1. Abre `https://cristiancamiloosuna-oss.github.io/Zunko/` en **Edge** o **Chrome**.
 2. Toca el ícono de **Instalar** que aparece a la derecha de la barra de direcciones (una pantalla con una flecha), o el menú **⋯ → Aplicaciones → Instalar este sitio como aplicación** en Edge / **⋮ → Transmitir, guardar y compartir → Instalar página como app** en Chrome.
 3. Queda en el menú Inicio con el ícono de Zunko. Clic derecho en su ícono de la barra de tareas → **Anclar a la barra de tareas**.
 
