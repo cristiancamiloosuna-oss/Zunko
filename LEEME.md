@@ -8,7 +8,8 @@ App instalable para manejar la tienda: productos por etapa, calculadora de preci
 - `pauta.js`: las reglas de la pauta de prueba (48 h, CTR 1,5 %, día 3, escalar 20–30 %, tope de $150.000). Prueba: `node test-pauta.js`.
 - `landing.js`: el generador de landings (estructura de tiendazunko.com) y su revisión. Prueba: `node test-landing.js`.
 - `fotos.js`: las fotos de los productos, guardadas en el navegador.
-- `crear.js`: la pantalla Crear → Landing.
+- `creativos.js`: las 7 plantillas de creativos dibujadas en canvas (feed 4:5, historia 9:16, cuadrado 1:1).
+- `crear.js`: la pantalla Crear (landing y creativos).
 - `docs/centro-de-mando-zunko.md`: la especificación de pantallas, plantillas y landings.
 
 ## Publicar en GitHub Pages

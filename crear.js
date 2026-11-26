@@ -29,10 +29,10 @@ function ctxRevision(p) {
 function vCrear() {
   const c = crearEstado();
   const tabs = `<div class="seg2"><button data-csub="landing" aria-pressed="${c.sub === 'landing'}">Landing</button><button data-csub="creativos" aria-pressed="${c.sub === 'creativos'}">Creativos</button></div>`;
-  if (c.sub === 'creativos') return header('Crear', tabs) + `<div class="card vacio"><h2>Plantillas de creativos</h2><p>Siguiente paso: las 7 plantillas en PNG y el lote de hooks, con las mismas fotos y textos de la landing.</p></div>`;
   const vivos = S.productos.filter(p => p.etapa !== 'descartado');
   if (!vivos.length) return header('Crear', tabs) + `<div class="card vacio"><h2>Primero agrega un producto</h2><p>La landing toma el precio, la competencia y los hooks de la ficha.</p><button class="btn" data-tab="prod" style="margin-top:14px">Ir a Productos</button></div>`;
   const p = prepararVenta(prod(c.prodId)), v = p.venta;
+  if (c.sub === 'creativos') return vCreativos(p, vivos, tabs);
   const lines = a => esc((a || []).join('\n'));
   const T = (path, label, val, ph = '') => `<div class="f"><label for="cv-${path}">${label}</label><div class="inp"><input id="cv-${path}" data-v="${path}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off"></div></div>`;
   const N = (path, label, val, ph = '', money = false) => `<div class="f"><label for="cv-${path}">${label}</label><div class="inp">${money ? '<span>$</span>' : ''}<input id="cv-${path}" data-v="${path}" data-num inputmode="numeric" value="${esc(fmtIn(val))}" placeholder="${esc(ph)}"></div></div>`;
@@ -115,7 +115,8 @@ function vCrear() {
 
 // Después de pintar: miniaturas, revisión y vista previa
 async function crearMontado() {
-  const c = S.crear, p = c && prod(c.prodId); if (!p || c.sub !== 'landing') return;
+  const c = S.crear, p = c && prod(c.prodId); if (!p) return;
+  if (c.sub === 'creativos') { pintarCreativo(); return; }
   for (const img of document.querySelectorAll('[data-thumb]')) img.src = await Fotos.url(img.dataset.thumb);
   actualizarCrear(true);
 }
@@ -218,4 +219,122 @@ document.addEventListener('change', async e => {
     }
     el.value = ''; save(); render(); toast('Fotos guardadas');
   }
+});
+
+
+// ---------- Crear → Creativos ----------
+function selProducto(vivos, p) {
+  return `<div class="f" style="flex:1 1 260px"><label for="c-prod">Producto</label><div class="inp"><select id="c-prod">${vivos.map(x => `<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${esc(x.nombre)} · ${nombreEtapa(x.etapa)}</option>`).join('')}</select></div></div>`;
+}
+function vCreativos(p, vivos, tabs) {
+  const c = S.crear;
+  c.plantilla = c.plantilla || 'hook'; c.tam = c.tam || 'feed';
+  if (c.foto && !p.fotos.some(f => f.id === c.foto)) c.foto = '';
+  const hooks = p.hooks.length ? p.hooks : [];
+  c.hook = Math.min(+c.hook || 0, Math.max(0, hooks.length - 1));
+  const P = Creativos.PLANTILLAS.find(x => x.id === c.plantilla);
+  return header('Crear', tabs) + `
+  <div class="row" style="margin-bottom:12px;flex-wrap:wrap">${selProducto(vivos, p)}</div>
+  <div class="cols fija"><div class="in">
+  <section class="card"><h2>Plantilla</h2><div class="plants">${Creativos.PLANTILLAS.map((x, i) => `<button class="plant" data-cplant="${x.id}" aria-pressed="${x.id === c.plantilla}"><b>${i + 1} · ${x.nombre}</b><small>${x.desc}</small></button>`).join('')}</div></section>
+  <section class="card"><h2>Ajustes del creativo</h2>
+    <div class="f"><span class="lbl">Tamaño</span><div class="seg2">${Object.entries(Creativos.TAM).map(([k, t]) => `<button data-ctam="${k}" aria-pressed="${k === c.tam}">${t.nombre}</button>`).join('')}</div></div>
+    ${P.usaHook ? `<div class="f" style="margin-top:12px"><label for="c-hook">Hook</label><div class="inp"><select id="c-hook">${hooks.map((h, i) => `<option value="${i}" ${i === c.hook ? 'selected' : ''}>${i + 1}. ${esc(h)}</option>`).join('') || '<option value="0">Sin hooks: usa el titular</option>'}</select></div></div>` : ''}
+    ${P.usaFoto ? `<div class="f" style="margin-top:12px"><label for="c-foto">Foto</label><div class="inp"><select id="c-foto"><option value="">La primera</option>${p.fotos.map((f, i) => `<option value="${f.id}" ${f.id === c.foto ? 'selected' : ''}>Foto ${i + 1}${f.alt ? ' · ' + esc(f.alt.slice(0, 30)) : ''}${f.ia ? ' (IA)' : ''}</option>`).join('')}</select></div></div>` : ''}
+    <p class="note">Los textos salen de la ficha (hooks) y de la landing (titular, contraste, anclaje, lugares de uso, oferta por volumen). Para cambiarlos, edítalos ahí: así anuncio y página dicen lo mismo.</p>
+    ${!p.fotos.length ? '<div class="aviso" style="margin-top:10px">Este producto no tiene fotos. Súbelas en Crear → Landing.</div>' : ''}
+  </section>
+  <section class="card"><h2>Descargar</h2>
+    <div class="acts" style="flex-direction:column">
+      <button class="btn" id="cr-png">Descargar este PNG</button>
+      <button class="btn sec" id="cr-lote" ${hooks.length < 2 ? 'disabled' : ''}>Lote de hooks: ${hooks.length} PNG de «Hook + foto» (.zip)</button>
+      <button class="btn sec" id="cr-todas">Las 7 plantillas en este tamaño (.zip)</button>
+    </div>
+    <p class="note">El lote usa la misma foto con cada hook: es el conjunto de 4–6 creativos de la prueba.</p>
+  </section>
+  </div><div class="out">
+    <section class="card"><h2>Vista previa</h2><div class="lienzo"><canvas id="cr-canvas" aria-label="Vista previa del creativo"></canvas></div><div id="cr-avisos"></div></section>
+  </div></div>`;
+}
+
+const bitmaps = {};
+async function bitmap(id) {
+  if (!id) return null;
+  if (!bitmaps[id]) { const b = await Fotos.get(id); bitmaps[id] = b ? await createImageBitmap(b) : null; }
+  return bitmaps[id];
+}
+let fuentesListas = null;
+function fuentes() {
+  if (!fuentesListas) fuentesListas = Promise.all(['800 80px "Bricolage Grotesque"', '600 40px "Instrument Sans"', '500 40px "Instrument Sans"', '700 40px "Instrument Sans"'].map(f => document.fonts.load(f).catch(() => {})));
+  return fuentesListas;
+}
+async function datosCreativo(p, hookIdx, fotoId) {
+  const v = prepararVenta(p).venta, F = (Landing.FAMILIAS[v.familia] || Landing.FAMILIAS.nogal).claro;
+  const P = +p.costeo.P || 0, foto = p.fotos.find(f => f.id === fotoId) || p.fotos[0];
+  const u = v.unidades || {}, m = v.mercado || {};
+  const r = x => '$' + Math.round(x >= 1000 ? Math.round(x / 100) * 100 : x).toLocaleString('es-CO');
+  let anclaje = null;
+  if (P && +u.cantidad && u.plural) {
+    anclaje = { porU: r(P / u.cantidad), singular: u.singular || u.plural, plural: u.plural, cantidad: (+u.cantidad).toLocaleString('es-CO'), mercado: '' };
+    if (+m.min && +m.cantidad) {
+      const a = m.min / m.cantidad, b = (+m.max || +m.min) / m.cantidad;
+      anclaje.mercado = `${m.descripcion ? 'Los ' + m.descripcion : 'La alternativa'}: ${money(m.min)}${+m.max && +m.max !== +m.min ? '–' + money(m.max).slice(1) : ''}. O sea ${r(a)}${b !== a ? '–' + r(b).slice(1) : ''} cada ${u.singular || 'unidad'}.`;
+    }
+  }
+  const usos = [];
+  for (let i = 0; i < 3; i++) {
+    const uu = v.usos[i] || {}, f = p.fotos.find(x => x.id === uu.foto) || p.fotos[(i + 1) % Math.max(1, p.fotos.length)];
+    usos.push({ lugar: uu.lugar, img: f ? await bitmap(f.id) : null, ia: f && f.ia });
+  }
+  return {
+    nombre: p.nombre, hook: p.hooks[hookIdx] || '', titular: v.titular, viejo: v.viejo, nuevo: v.nuevo,
+    precio: P, tachado: Landing.tachado(P), escalones: Landing.escalones(p), anclaje, usos,
+    img: foto ? await bitmap(foto.id) : null, ia: !!(foto && foto.ia), iaUsos: usos.some(x => x.ia), fam: F,
+  };
+}
+function avisosMarca(p, d) {
+  const marcas = ajLanding().marcas.split(',').map(x => x.trim()).filter(Boolean);
+  const txt = [d.hook, d.titular, ...d.viejo, ...d.nuevo, ...d.usos.map(x => x.lugar)].join(' ').toLowerCase();
+  const m = marcas.find(x => new RegExp('(^|[^a-záéíóúñ0-9])' + x.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-záéíóúñ0-9]|$)').test(txt));
+  return m ? [`Aparece la marca «${m}». Meta tumba cuentas por marcas ajenas.`] : [];
+}
+async function pintarCreativo() {
+  const cv = $('#cr-canvas'); if (!cv) return;
+  const c = S.crear, p = prod(c.prodId);
+  await fuentes();
+  const d = await datosCreativo(p, +c.hook || 0, c.foto);
+  if (c.plantilla === 'usos') d.ia = d.iaUsos;
+  const av = Creativos.dibujar(cv, c.plantilla, c.tam, d).concat(avisosMarca(p, d));
+  $('#cr-avisos').innerHTML = av.length ? `<div class="als">${av.map(a => `<div class="al aviso"><span class="al-i">!</span><div><p>${esc(a)}</p></div></div>`).join('')}</div>` : '<div class="al bien" style="margin-top:12px"><span class="al-i">✓</span><div><p>Listo para descargar.</p></div></div>';
+}
+async function pngDe(p, plantilla, tam, hook, foto) {
+  await fuentes();
+  const cv = document.createElement('canvas'), d = await datosCreativo(p, hook, foto);
+  if (plantilla === 'usos') d.ia = d.iaUsos;
+  Creativos.dibujar(cv, plantilla, tam, d);
+  return new Promise(res => cv.toBlob(res, 'image/png'));
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !b.closest('#app')) return;
+  const d = b.dataset, c = S.crear, p = cp(); if (!p || !c || c.sub !== 'creativos') return;
+  if (d.cplant) { c.plantilla = d.cplant; save(); render(); return; }
+  if (d.ctam) { c.tam = d.ctam; save(); document.querySelectorAll('[data-ctam]').forEach(x => x.setAttribute('aria-pressed', x === b)); pintarCreativo(); return; }
+  const base = `zunko-${slug(p.nombre)}`;
+  if (b.id === 'cr-png') { bajar(await pngDe(p, c.plantilla, c.tam, +c.hook || 0, c.foto), `${base}-${c.plantilla}-${c.tam}.png`); toast('PNG descargado'); return; }
+  if (b.id === 'cr-lote' || b.id === 'cr-todas') {
+    b.disabled = true; toast('Armando el .zip…');
+    try {
+      const arch = [];
+      if (b.id === 'cr-lote') for (let i = 0; i < p.hooks.length; i++) arch.push({ nombre: `${base}-hook-${i + 1}-${c.tam}.png`, datos: new Uint8Array(await (await pngDe(p, 'hook', c.tam, i, c.foto)).arrayBuffer()) });
+      else for (const [i, pl] of Creativos.PLANTILLAS.entries()) arch.push({ nombre: `${base}-${i + 1}-${pl.id}-${c.tam}.png`, datos: new Uint8Array(await (await pngDe(p, pl.id, c.tam, +c.hook || 0, c.foto)).arrayBuffer()) });
+      bajar(new Blob([Landing.zip(arch)], { type: 'application/zip' }), `${base}-${b.id === 'cr-lote' ? 'lote-hooks' : 'plantillas'}-${c.tam}.zip`);
+      p.decisiones.push({ fecha: new Date().toISOString(), texto: b.id === 'cr-lote' ? `Lote de ${p.hooks.length} creativos de hook descargado (${Creativos.TAM[c.tam].nombre}).` : `Las 7 plantillas descargadas (${Creativos.TAM[c.tam].nombre}).` });
+      save(); toast('Creativos descargados');
+    } finally { b.disabled = false; }
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target, c = S.crear; if (!c || c.sub !== 'creativos') return;
+  if (el.id === 'c-hook') { c.hook = +el.value; save(); pintarCreativo(); }
+  if (el.id === 'c-foto') { c.foto = el.value; save(); pintarCreativo(); }
 });
