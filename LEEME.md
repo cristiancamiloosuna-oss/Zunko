@@ -10,9 +10,15 @@ App instalable para manejar la tienda: productos por etapa, calculadora de preci
 
 En el repositorio: **Settings → Pages → Deploy from a branch → main → / (root) → Save**. En uno o dos minutos queda en `https://TU-USUARIO.github.io/zunko/`.
 
-## Instalar en el celular
+## Instalar en el PC (Windows)
 
-Abre el enlace en Chrome y usa **⋮ → Instalar app**. En iPhone, desde Safari: **Compartir → Agregar a inicio**.
+1. Abre `https://cristiancamiloosuna-oss.github.io/zunko/` en **Edge** o **Chrome**.
+2. Toca el ícono de **Instalar** que aparece a la derecha de la barra de direcciones (una pantalla con una flecha), o el menú **⋯ → Aplicaciones → Instalar este sitio como aplicación** en Edge / **⋮ → Transmitir, guardar y compartir → Instalar página como app** en Chrome.
+3. Queda en el menú Inicio con el ícono de Zunko. Clic derecho en su ícono de la barra de tareas → **Anclar a la barra de tareas**.
+
+Abre en su propia ventana, sin pestañas, y funciona sin internet. Los datos viven en ese navegador de ese PC: si usas Edge y Chrome a la vez, cada uno tiene sus propios datos. Usa siempre el mismo.
+
+También se puede instalar en el celular (Chrome **⋮ → Instalar app**), pero los datos no se pasan solos de un equipo a otro.
 
 ## Actualizar
 

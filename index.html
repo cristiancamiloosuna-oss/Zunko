@@ -96,6 +96,28 @@ h1,h2,h3,p{margin:0}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 @media (max-width:360px){.grid{grid-template-columns:1fr}}
+.cols{display:block}
+.tabs .logo{display:none}
+/* Computador (Windows): barra lateral y la calculadora en dos columnas */
+@media (min-width:900px){
+  body{padding-left:220px}
+  #app{max-width:1180px;padding:0 32px 40px}
+  .top{padding-top:24px}
+  .top h1{font-size:30px}
+  .top .brand{display:none}
+  .tabs{top:0;right:auto;width:220px;border-top:0;border-right:1px solid var(--line);padding:20px 12px}
+  .tabs div{display:flex;flex-direction:column;gap:4px;max-width:none}
+  .tabs .logo{display:block;font:800 26px "Bricolage Grotesque",sans-serif;letter-spacing:-.02em;padding:0 12px 18px}
+  .tabs .logo b{color:var(--action)}
+  .tabs button{flex-direction:row;gap:12px;font-size:15px;padding:10px 12px;justify-content:flex-start}
+  .tabs button:hover{background:var(--soft)}
+  .tabs button[aria-current="page"]{background:var(--soft)}
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+  .cols>.out{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding-right:4px}
+  .grid{grid-template-columns:1fr 1fr}
+  .toast{bottom:24px;left:calc(50% + 110px)}
+}
+@media (min-width:1280px){.cols{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
 </style>
 </head>
 <body>
@@ -143,7 +165,7 @@ const TABS = [['hoy', 'Hoy'], ['prod', 'Productos'], ['calc', 'Calcular'], ['cre
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 1800); }
 
 function renderTabs() {
-  $('#tabs').innerHTML = TABS.map(([id, n]) => `<button data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>${ic(id)}${n}</button>`).join('');
+  $('#tabs').innerHTML = '<span class="logo">zunk<b>o</b></span>' + TABS.map(([id, n]) => `<button data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>${ic(id)}${n}</button>`).join('');
 }
 
 function render() {
@@ -176,13 +198,14 @@ function vCalc() {
   const fallas = Calc.autoprueba();
   return `<header class="top"><h1>Calculadora de precio</h1><span class="brand">zunk<b>o</b></span></header>
   ${fallas.length ? `<div class="alerta" role="alert"><b>La calculadora no cuadra con el ejemplo de la hoja.</b> No confíes en estos números.<br>${fallas.map(esc).join('<br>')}</div>` : ''}
+  <div class="cols"><div class="in">
   <section class="card"><h2>Entradas</h2><div class="grid">${CAMPOS.map(campo).join('')}</div>
   <p class="note">Toca la etiqueta de un dato para marcarlo como real o como supuesto.</p></section>
   <section class="card"><h2>1 · Precio sugerido</h2><div class="chips" id="sug"></div>
   <div class="row" style="margin-top:10px"><div class="f"><label for="in-m">Margen propio</label><div class="inp"><input id="in-m" inputmode="numeric" value="${Math.round(S.calc.m * 100)}"><span>%</span></div></div></div></section>
   <section class="card"><h2>2 · Precio final</h2><div class="row"><div class="f"><label for="in-P">Precio al que vas a vender</label><div class="inp"><span>$</span><input id="in-P" data-k="P" inputmode="numeric" value="${esc(fmtIn(S.calc.P))}" placeholder="89.900"></div></div><button class="btn sec" id="redondear">Usar sugerido</button></div>
   <p class="note" id="nota-p"></p></section>
-  <div id="res"></div>`;
+  </div><div class="out" id="res"></div></div>`;
 }
 
 function pintarResultados() {
