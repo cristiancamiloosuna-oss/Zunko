@@ -13,6 +13,9 @@ let S = load();
 function costeoNuevo(a) {
   return { C: '', F: '', E: a.E, X: a.X, A: a.A, U: a.U, CPA: a.CPA, P: '', I: a.I, m: 0.2, real: {} };
 }
+function pautaNueva() {
+  return { lanzamiento: '', presupuesto: 80000, stockConfirmado: false, entregasConfirmadas: false, creativos: [], registro: {}, entregas: { despachados: '', entregados: '' } };
+}
 function load() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(LSK)); } catch (e) {}
@@ -23,6 +26,7 @@ function load() {
   s.pendientes = s.pendientes || [];
   s.tab = s.tab || 'calc';
   s.view = s.view || null;
+  s.productos.forEach(p => { p.pauta = Object.assign(pautaNueva(), p.pauta); });
   return s;
 }
 function save() {
@@ -99,6 +103,7 @@ function renderTabs() {
   $('#tabs').innerHTML = '<span class="logo">zunk<b>o</b></span>' + TABS.map(([id, n]) => `<button data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>${ic(id)}${n}</button>`).join('');
 }
 function render() {
+  renderPendiente = false;
   renderTabs();
   document.body.classList.toggle('ancho', S.tab === 'prod' && !S.view);
   const v = S.view && S.view.ficha ? vFicha : S.view && S.view.costeo ? vCalc
@@ -149,7 +154,7 @@ function nuevoProducto(nombre, link, costo) {
     id: uid(), nombre, etapa: 'radar', creado: t, etapaDesde: t,
     proveedor: { link: link || '', stock: '' }, competencia: [], notas: '',
     angulo: '', hooks: [], fotosReales: false,
-    costeo: costeoNuevo(S.ajustes), pauta: { lanzamiento: '', presupuesto: 80000 },
+    costeo: costeoNuevo(S.ajustes), pauta: pautaNueva(),
     decisiones: [{ fecha: t, texto: 'Entró al radar.' }], motivoDescarte: '',
   };
   p.costeo.C = costo || '';
@@ -172,6 +177,7 @@ async function moverEtapa(p, destino) {
   const t = new Date().toISOString();
   p.decisiones.push({ fecha: t, texto: destino === 'descartado' ? `Descartado: ${motivo}` : `Pasó de ${nombreEtapa(p.etapa)} a ${nombreEtapa(destino)}.` });
   p.motivoDescarte = motivo;
+  if (destino === 'pauta' && !p.pauta.creativos.length && p.hooks.length) p.pauta.creativos = p.hooks.map(h => ({ id: uid(), nombre: h, estado: 'activo' }));
   p.etapa = destino; p.etapaDesde = t;
   save(); render(); toast(destino === 'descartado' ? 'Producto descartado' : 'Movido a ' + nombreEtapa(destino));
 }
@@ -199,7 +205,7 @@ function vHoy() {
   <div class="out">
   <section class="card"><h2>Productos por etapa</h2><div class="etapas">${ETAPAS.slice(0, 4).map(([id, n]) => `<button class="etapa" data-tab="prod"><b>${cuenta(id)}</b><span>${n}</span></button>`).join('')}</div></section>
   ${listos.length ? `<section class="card"><h2>Listos para avanzar</h2>${listos.map(p => `<button class="lrow" data-ficha="${p.id}"><span class="dot verde"></span><span><b>${esc(p.nombre)}</b><small>${nombreEtapa(p.etapa)} → ${nombreEtapa(ORDEN[ORDEN.indexOf(p.etapa) + 1])}</small></span></button>`).join('')}</section>` : ''}
-  <section class="card"><h2>Alertas de pauta</h2><p class="empty">Llegan con el registro diario de pauta (siguiente paso).</p></section>
+  <section class="card"><h2>Alertas de pauta</h2>${alertasHoy()}</section>
   </div></div>`;
 }
 function filaPend(x) {
@@ -244,6 +250,7 @@ function vFicha() {
   ${p.etapa === 'descartado' ? `<div class="alerta">Descartado: ${esc(p.motivoDescarte)} <button class="lnk" data-mover="radar">Devolver al radar</button></div>` : ''}
   ${f.length ? `<div class="aviso">Para pasar a ${nombreEtapa(sig)} falta ${f.map(esc).join(', ')}.</div>` : sig && p.etapa !== 'descartado' ? `<div class="aviso ok">Listo para pasar a ${nombreEtapa(sig)}.</div>` : ''}
 
+  ${p.etapa === 'pauta' ? seccionPauta(p) : ''}
   <section class="card"><h2>Radar · proveedor y competencia</h2><div class="grid">
     ${campoTxt('link', 'proveedor.link', 'Link del proveedor (Dropi / Dropkiller)', p.proveedor.link, 'https://', 'url')}
     ${campoTxt('costo', 'costeo.C', 'Costo proveedor', p.costeo.C, '0', 'money')}
@@ -268,10 +275,7 @@ function vFicha() {
   ${tiene ? `<dl class="kv"><dt>Precio final</dt><dd>${money(+p.costeo.P)}</dd><dt>BREAKEVEN</dt><dd class="${Calc.semaforo(r.breakeven) === 'rojo' ? 'neg' : Calc.semaforo(r.breakeven) === 'verde' ? 'pos' : ''}">${money(r.breakeven)}</dd><dt>Utilidad por entregado</dt><dd class="${sgn(r.utilEnt)}">${money(r.utilEnt)}</dd><dt>Costos / precio</dt><dd>${pct(r.pct.costos)}</dd>${pc ? `<dt>Competencia más barata</dt><dd>${money(pc)}</dd>` : ''}</dl>` : '<p class="empty small">Sin costear todavía.</p>'}
   <button class="btn sec" style="width:100%;margin-top:12px" data-costeo="${p.id}">${tiene ? 'Abrir costeo' : 'Costear con la calculadora'}</button></section>
 
-  <section class="card"><h2>Pauta</h2><div class="grid">
-    ${campoTxt('lanz', 'pauta.lanzamiento', 'Lanzamiento', p.pauta.lanzamiento, '', 'datetime-local')}
-    ${campoTxt('pres', 'pauta.presupuesto', 'Presupuesto diario', p.pauta.presupuesto, '80.000', 'money')}
-  </div><p class="note">El registro diario por creativo y las alertas (48 h, CTR, día 3, escalar) llegan en el siguiente paso.</p></section>
+  ${p.etapa !== 'pauta' ? seccionPauta(p) : ''}
   </div>
 
   <div class="out">
@@ -301,13 +305,93 @@ function resumenProducto(p) {
   if (p.hooks.length) L.push('Hooks:\n' + p.hooks.map((h, k) => `${k + 1}. ${h}`).join('\n'));
   L.push(`Fotos reales: ${p.fotosReales ? 'sí' : 'no'}`);
   if (+p.costeo.C) L.push(resumenCosteo(p.costeo));
-  if (p.pauta.lanzamiento) L.push(`Pauta: lanzada ${p.pauta.lanzamiento}, ${money(+p.pauta.presupuesto || 0)}/día`);
+  if (p.pauta.lanzamiento) L.push(resumenPauta(p));
   if (p.notas) L.push(`Notas: ${p.notas}`);
   L.push('Decisiones:\n' + p.decisiones.map(d => `- ${fechaCorta(d.fecha)}: ${d.texto}`).join('\n'));
   const f = faltantes(p); if (f.length) L.push(`Falta para avanzar: ${f.join(', ')}`);
   L.push('\nPregunta: ');
   return L.join('\n');
 }
+
+
+// ---------- Pauta: registro diario y alertas ----------
+let regFecha = hoyISO();
+const breakevenDe = p => (+p.costeo.P && +p.costeo.C ? calcProd(p).breakeven : 0);
+const ICONIV = { mal: '!', aviso: '!', bien: '✓', info: 'i' };
+function filaAlerta(a, p, conNombre) {
+  let btn = '';
+  if (a.accion && a.accion.tipo === 'apagar') btn = `<button class="btn sec chico" data-alapagar="${a.accion.id}" data-p="${p.id}">Marcar apagado</button>`;
+  if (a.accion && a.accion.tipo === 'subir') btn = `<button class="btn sec chico" data-alsubir="${a.accion.a}" data-p="${p.id}">Subir a ${money(a.accion.a)}</button>`;
+  if (a.accion && a.accion.tipo === 'efectividad') btn = `<button class="btn sec chico" data-alefect="${p.id}">Usar la real</button>`;
+  return `<div class="al ${a.nivel}"><span class="al-i">${ICONIV[a.nivel]}</span><div><p>${conNombre ? `<button class="lnk" data-ficha="${p.id}">${esc(p.nombre)}</button>: ` : ''}${esc(a.texto)}</p>${btn}</div></div>`;
+}
+function alertasHoy() {
+  const ps = S.productos.filter(p => p.etapa === 'pauta' || (p.pauta.lanzamiento && p.etapa !== 'descartado'));
+  if (!ps.length) return '<p class="empty">Ningún producto en pauta.</p>';
+  const filas = ps.flatMap(p => Pauta.alertas(p, breakevenDe(p)).map(a => [a, p]));
+  const orden = { mal: 0, aviso: 1, bien: 2, info: 3 };
+  filas.sort((x, y) => orden[x[0].nivel] - orden[y[0].nivel]);
+  return filas.map(([a, p]) => filaAlerta(a, p, true)).join('') || '<p class="empty">Todo en orden.</p>';
+}
+function seccionPauta(p) {
+  const be = breakevenDe(p), t = Pauta.tiempo(p, Date.now()), m = Pauta.metricas(p);
+  const al = Pauta.alertas(p, be);
+  const reg = (p.pauta.registro[regFecha]) || {};
+  const crs = p.pauta.creativos;
+  const cpaCls = c => (!c.pedidos ? '' : be && c.cpa > be ? 'neg' : be && c.cpa <= be * 0.8 ? 'pos' : '');
+  const er = Pauta.efectividadReal(p);
+  const v = (id, k) => (reg[id] && reg[id][k] !== '' && reg[id][k] != null ? fmtIn(reg[id][k]) : '');
+  return `<section class="card" id="pauta"><h2>Pauta${t.lanzado && t.dia ? ` · día ${t.dia}` : ''}</h2>
+  <div class="grid">
+    ${campoTxt('lanz', 'pauta.lanzamiento', 'Lanzamiento (fecha y hora)', p.pauta.lanzamiento, '', 'datetime-local')}
+    ${campoTxt('pres', 'pauta.presupuesto', 'Presupuesto diario', p.pauta.presupuesto, '80.000', 'money')}
+  </div>
+  <p class="note">Estructura fija: una campaña, un conjunto, público amplio, 4–6 creativos con el mismo guion y distinto hook. Revisa métricas una vez al día.</p>
+  ${al.length ? `<div class="als">${al.map(a => filaAlerta(a, p)).join('')}</div>` : ''}
+
+  <h3 class="sub">Creativos <span class="mute">${crs.filter(c => c.estado !== 'apagado').length} activos</span></h3>
+  ${crs.length ? `<div class="tw"><table class="tb"><thead><tr><th>Creativo</th><th>Gasto</th><th>CTR</th><th>Pedidos</th><th>CPA</th><th></th></tr></thead><tbody>
+    ${m.creativos.map(c => `<tr class="${c.estado === 'apagado' ? 'off' : ''}"><td>${esc(c.nombre)}</td><td>${money(c.gasto)}</td><td class="${c.imp && c.ctr < Pauta.CTR_MIN ? 'neg' : ''}">${c.imp ? pct1(c.ctr) : '—'}</td><td>${c.pedidos}</td><td class="${cpaCls(c)}">${c.pedidos ? money(c.cpa) : '—'}</td><td><button class="lnk" data-crestado="${c.id}">${c.estado === 'apagado' ? 'Encender' : 'Apagar'}</button></td></tr>`).join('')}
+    <tr class="tot"><td>Total</td><td>${money(m.total.gasto)}</td><td>${m.total.imp ? pct1(m.total.ctr) : '—'}</td><td>${m.total.pedidos}</td><td>${m.total.pedidos ? money(m.total.cpa) : '—'}</td><td></td></tr>
+  </tbody></table></div>${be ? `<p class="note">CPA en verde: holgado (80% del techo o menos). En rojo: pasa el BREAKEVEN de ${money(be)}.</p>` : ''}`
+  : `<p class="empty small">Sin creativos.</p>${p.hooks.length ? `<button class="btn sec" id="cargarhooks" style="width:100%">Usar los ${p.hooks.length} hooks como creativos</button>` : ''}`}
+  <button class="addrow" id="addcr">${ic('plus', 18)}Agregar creativo</button>
+
+  ${crs.length ? `<h3 class="sub">Registro del día</h3>
+  <div class="row" style="margin-bottom:8px"><div class="f" style="max-width:220px"><label for="reg-fecha">Fecha</label><div class="inp"><input id="reg-fecha" type="date" value="${regFecha}" max="${hoyISO()}"></div></div></div>
+  <div class="tw"><table class="tb reg"><thead><tr><th>Creativo</th><th>Gasto $</th><th>Impresiones</th><th>Clics</th><th>Pedidos</th></tr></thead><tbody>
+  ${crs.map(c => `<tr class="${c.estado === 'apagado' ? 'off' : ''}"><td>${esc(c.nombre)}</td>${['gasto', 'imp', 'clics', 'pedidos'].map(k => `<td><input id="rg-${c.id}-${k}" data-reg="${c.id}|${k}" inputmode="numeric" value="${v(c.id, k)}" placeholder="0" aria-label="${k} de ${esc(c.nombre)}"></td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>
+  <p class="note">Copia los números del Ads Manager para cada creativo en el día elegido. Se guarda solo.</p>` : ''}
+
+  ${m.dias.length ? `<h3 class="sub">Historial por día</h3><div class="tw"><table class="tb"><thead><tr><th>Fecha</th><th>Gasto</th><th>CTR</th><th>Pedidos</th><th>CPA</th></tr></thead><tbody>
+  ${m.dias.slice().reverse().map(d => `<tr><td><button class="lnk" data-regdia="${d.fecha}">${fechaCorta(d.fecha)}</button></td><td>${money(d.gasto)}</td><td>${d.imp ? pct1(d.ctr) : '—'}</td><td>${d.pedidos}</td><td class="${be && d.pedidos && d.cpa > be ? 'neg' : ''}">${d.pedidos ? money(d.cpa) : '—'}</td></tr>`).join('')}
+  </tbody></table></div>` : ''}
+
+  <h3 class="sub">Entregas reales</h3>
+  <div class="grid">
+    ${campoTxt('desp', 'pauta.entregas.despachados', 'Pedidos despachados', p.pauta.entregas.despachados, '0', 'number')}
+    ${campoTxt('entr', 'pauta.entregas.entregados', 'Pedidos entregados', p.pauta.entregas.entregados, '0', 'number')}
+  </div>
+  <p class="note">${er != null ? `Efectividad real: <b>${pct1(er)}</b> · el costeo usa ${p.costeo.E}% (${p.costeo.real.E ? 'real' : 'supuesto'}). ${Math.abs(er * 100 - p.costeo.E) >= 1 || !p.costeo.real.E ? `<button class="lnk" data-alefect="${p.id}">Usar ${pct1(er)} en el costeo</button>` : ''}` : 'Con las primeras entregas, cambia la efectividad supuesta por la real.'}</p>
+
+  <h3 class="sub">Antes de pasar de $150.000 al día</h3>
+  <label class="check"><input type="checkbox" data-pfc="pauta.stockConfirmado" ${p.pauta.stockConfirmado ? 'checked' : ''}> Stock confirmado por escrito con el proveedor</label>
+  <label class="check"><input type="checkbox" data-pfc="pauta.entregasConfirmadas" ${p.pauta.entregasConfirmadas ? 'checked' : ''}> Primeras entregas confirmadas</label>
+  </section>`;
+}
+const pct1 = v => (Math.round(v * 1000) / 10).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+function resumenPauta(p) {
+  const m = Pauta.metricas(p), t = Pauta.tiempo(p, Date.now()), be = breakevenDe(p), er = Pauta.efectividadReal(p);
+  const L = [`Pauta: lanzada ${p.pauta.lanzamiento.replace('T', ' ')} (día ${t.dia}), presupuesto ${money(+p.pauta.presupuesto || 0)}/día${be ? `, techo ${money(be)}` : ''}`];
+  if (m.creativos.length) L.push('Creativos (acumulado):\n' + m.creativos.map(c => `- ${c.nombre}${c.estado === 'apagado' ? ' [apagado]' : ''}: gasto ${money(c.gasto)}, CTR ${c.imp ? pct1(c.ctr) : '—'}, ${c.pedidos} pedidos, CPA ${c.pedidos ? money(c.cpa) : '—'}`).join('\n'));
+  if (m.dias.length) L.push('Por día:\n' + m.dias.map(d => `- ${d.fecha}: gasto ${money(d.gasto)}, CTR ${d.imp ? pct1(d.ctr) : '—'}, ${d.pedidos} pedidos, CPA ${d.pedidos ? money(d.cpa) : '—'}`).join('\n'));
+  if (er != null) L.push(`Entregas: ${p.pauta.entregas.entregados} de ${p.pauta.entregas.despachados} despachados (${pct1(er)})`);
+  L.push(`Stock confirmado: ${p.pauta.stockConfirmado ? 'sí' : 'no'} · primeras entregas confirmadas: ${p.pauta.entregasConfirmadas ? 'sí' : 'no'}`);
+  const al = Pauta.alertas(p, be); if (al.length) L.push('Alertas de la app:\n' + al.map(a => `- ${a.texto}`).join('\n'));
+  return L.join('\n');
+}
+function decidir(p, texto) { p.decisiones.push({ fecha: new Date().toISOString(), texto }); }
 
 // ---------- Calcular (suelta o del producto) ----------
 const CUR = () => (S.view && S.view.costeo && prod(S.view.costeo) ? prod(S.view.costeo).costeo : S.calc);
@@ -464,6 +548,27 @@ document.addEventListener('click', async e => {
     S.pendientes.forEach(x => { if (x.productoId === p.id) x.productoId = ''; });
     save(); ir('prod'); toast('Producto borrado'); return;
   }
+  if (d.alapagar || d.crestado) {
+    const p = prod(d.p || S.view.ficha), c = p.pauta.creativos.find(x => x.id === (d.alapagar || d.crestado));
+    c.estado = d.alapagar ? 'apagado' : c.estado === 'apagado' ? 'activo' : 'apagado';
+    decidir(p, `Creativo «${c.nombre}» ${c.estado === 'apagado' ? 'apagado' : 'encendido'}.`); save(); render(); toast('Creativo ' + (c.estado === 'apagado' ? 'apagado' : 'encendido')); return;
+  }
+  if (d.alsubir) {
+    const p = prod(d.p), a = +d.alsubir, antes = +p.pauta.presupuesto || 0;
+    if (a > Pauta.TOPE_ESCALA && !Pauta.puedeEscalar(p)) { toast('Primero confirma stock y primeras entregas'); return; }
+    p.pauta.presupuesto = a; p.pauta.ultimaSubida = hoyISO(); decidir(p, `Presupuesto de ${money(antes)} a ${money(a)} al día.`); save(); render(); toast('Presupuesto actualizado: súbelo igual en el Ads Manager'); return;
+  }
+  if (d.alefect) {
+    const p = prod(d.alefect), er = Pauta.efectividadReal(p); if (er == null) return;
+    const antes = p.costeo.E; p.costeo.E = Math.round(er * 100); p.costeo.real.E = true;
+    decidir(p, `Efectividad del costeo de ${antes}% a ${p.costeo.E}% (real).${+p.costeo.P ? ` BREAKEVEN ahora ${money(calcProd(p).breakeven)}.` : ''}`); save(); render(); toast('Costeo recalculado con la efectividad real'); return;
+  }
+  if (d.regdia) { regFecha = d.regdia; render(); const el = $('#reg-fecha'); if (el) el.scrollIntoView({ block: 'center' }); return; }
+  if (b.id === 'cargarhooks') { const p = prod(S.view.ficha); p.pauta.creativos = p.hooks.map(h => ({ id: uid(), nombre: h, estado: 'activo' })); save(); render(); return; }
+  if (b.id === 'addcr') {
+    const r = await pedir({ titulo: 'Agregar creativo', campos: [{ k: 'n', label: 'Nombre o hook del creativo', required: true }], ok: 'Agregar' });
+    if (!r) return; const p = prod(S.view.ficha); p.pauta.creativos.push({ id: uid(), nombre: r.n, estado: 'activo' }); save(); render(); return;
+  }
   if (d.delpend) { S.pendientes = S.pendientes.filter(x => x.id !== d.delpend); save(); render(); return; }
   if (d.real) { const c = CUR(), k = d.real; c.real[k] = !c.real[k]; save(); b.classList.toggle('real', c.real[k]); b.setAttribute('aria-pressed', c.real[k]); b.textContent = TAGTXT[k][c.real[k] ? 1 : 0]; pintarResultados(); return; }
   if (d.m) { const c = CUR(); c.m = +d.m; $('#in-m').value = Math.round(c.m * 100); save(); pintarResultados(); return; }
@@ -496,15 +601,21 @@ document.addEventListener('submit', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.pend) { const x = S.pendientes.find(y => y.id === el.dataset.pend); x.hecho = el.checked; x.hechoEn = el.checked ? new Date().toISOString() : ''; save(); setTimeout(render, 250); return; }
-  if (el.dataset.pfc) { setPath(prod(S.view.ficha), el.dataset.pfc, el.checked); save(); return; }
+  if (el.dataset.pfc) { setPath(prod(S.view.ficha), el.dataset.pfc, el.checked); save(); renderKeep(); return; }
+  if (el.id === 'reg-fecha') { regFecha = el.value || hoyISO(); render(); return; }
   if (el.id === 'bk-file' && el.files[0]) { restaurar(el.files[0]); el.value = ''; return; }
-  // Al salir de un campo de la ficha se refrescan avisos y resumen. Si el usuario está haciendo
-  // clic en otro botón, se espera a que suelte para no comerse ese clic.
-  if (el.dataset.pf) { if (punteroAbajo) renderPendiente = true; else renderKeep(); }
+  // Al salir de un campo de la ficha se refrescan avisos, métricas y resumen, pero solo cuando el
+  // foco ya no está en otra casilla: así nunca se redibuja mientras se escribe.
+  if (el.dataset.pf || el.dataset.reg) { renderPendiente = true; setTimeout(refrescarSiLibre, 0); }
 });
-let punteroAbajo = false, renderPendiente = false;
-document.addEventListener('pointerdown', () => { punteroAbajo = true; }, true);
-document.addEventListener('pointerup', () => { punteroAbajo = false; if (renderPendiente) { renderPendiente = false; setTimeout(renderKeep, 0); } }, true);
+let renderPendiente = false;
+function refrescarSiLibre() {
+  if (!renderPendiente) return;
+  const a = document.activeElement;
+  if (a && a.matches('#app input:not([type=checkbox]), #app textarea, #app select')) return;
+  renderKeep();
+}
+document.addEventListener('focusout', () => setTimeout(refrescarSiLibre, 0));
 function renderKeep() {
   const id = document.activeElement && document.activeElement.id;
   render();
@@ -518,6 +629,16 @@ document.addEventListener('input', e => {
     if (el.dataset.money != null) { const v = parse(el.value); el.value = fmtIn(v); setPath(p, el.dataset.pf, v); }
     else setPath(p, el.dataset.pf, el.value);
     if (el.dataset.pf === 'nombre' && !el.value.trim()) return; // no guarda nombre vacío
+    save(); return;
+  }
+  if (el.dataset.reg) {
+    const p = prod(S.view.ficha), [id, k] = el.dataset.reg.split('|'), v = parse(el.value);
+    el.value = fmtIn(v);
+    const dia = p.pauta.registro[regFecha] = p.pauta.registro[regFecha] || {};
+    const fila = dia[id] = dia[id] || {};
+    fila[k] = v;
+    if (Object.values(fila).every(x => x === '' || x == null)) delete dia[id];
+    if (!Object.keys(dia).length) delete p.pauta.registro[regFecha];
     save(); return;
   }
   if (el.dataset.k) {

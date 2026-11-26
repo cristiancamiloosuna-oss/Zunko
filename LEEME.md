@@ -5,6 +5,7 @@ App instalable para manejar la tienda: productos por etapa, calculadora de preci
 - `index.html`: la app (estructura y estilos).
 - `app.js`: pantallas y lógica (tablero, ficha, pendientes, copia de seguridad).
 - `calc.js`: las fórmulas de la calculadora. Prueba: `node test-calc.js` (debe decir «el ejemplo de la hoja cuadra»).
+- `pauta.js`: las reglas de la pauta de prueba (48 h, CTR 1,5 %, día 3, escalar 20–30 %, tope de $150.000). Prueba: `node test-pauta.js`.
 - `docs/centro-de-mando-zunko.md`: la especificación de pantallas, plantillas y landings.
 
 ## Publicar en GitHub Pages
