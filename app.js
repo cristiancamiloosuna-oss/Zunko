@@ -307,6 +307,7 @@ function resumenProducto(p) {
   if (p.hooks.length) L.push('Hooks:\n' + p.hooks.map((h, k) => `${k + 1}. ${h}`).join('\n'));
   L.push(`Fotos reales: ${p.fotosReales ? 'sí' : 'no'}`);
   if (+p.costeo.C) L.push(resumenCosteo(p.costeo));
+  if (p.venta && (p.venta.titular || (p.fotos || []).length)) L.push(`Landing: titular «${p.venta.titular || '—'}», ${(p.fotos || []).length} fotos${(p.fotos || []).some(f => f.ia) ? ' (alguna con IA)' : ''}, ${p.venta.faq.filter(f => f.pregunta && f.respuesta).length} preguntas propias en el FAQ${p.venta.escalones.length ? ', oferta por volumen: ' + p.venta.escalones.map(e => e.cant + ' x ' + money(+e.precio || 0)).join(', ') : ''}`);
   if (p.pauta.lanzamiento) L.push(resumenPauta(p));
   if (p.notas) L.push(`Notas: ${p.notas}`);
   L.push('Decisiones:\n' + p.decisiones.map(d => `- ${fechaCorta(d.fecha)}: ${d.texto}`).join('\n'));
@@ -682,4 +683,4 @@ document.addEventListener('drop', e => {
 });
 
 render();
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js');

@@ -304,7 +304,12 @@ async function pintarCreativo() {
   await fuentes();
   const d = await datosCreativo(p, +c.hook || 0, c.foto);
   if (c.plantilla === 'usos') d.ia = d.iaUsos;
-  const av = Creativos.dibujar(cv, c.plantilla, c.tam, d).concat(avisosMarca(p, d));
+  const P = Creativos.PLANTILLAS.find(x => x.id === c.plantilla), falta = [];
+  if (P.usaFoto && !d.img) falta.push('Sin foto: súbelas en Crear → Landing (o se ve un bloque de color).');
+  if (c.plantilla === 'usos' && !d.usos.some(x => x.img)) falta.push('Sin fotos para los lugares de uso.');
+  if (P.usaHook && !d.hook) falta.push('El producto no tiene hooks: se usa el titular. Agrégalos en la ficha (Testeo).');
+  if (['oferta', 'unidad', 'lleva2'].includes(c.plantilla) && !d.precio) falta.push('Falta el precio final en el costeo del producto.');
+  const av = falta.concat(Creativos.dibujar(cv, c.plantilla, c.tam, d), avisosMarca(p, d));
   $('#cr-avisos').innerHTML = av.length ? `<div class="als">${av.map(a => `<div class="al aviso"><span class="al-i">!</span><div><p>${esc(a)}</p></div></div>`).join('')}</div>` : '<div class="al bien" style="margin-top:12px"><span class="al-i">✓</span><div><p>Listo para descargar.</p></div></div>';
 }
 async function pngDe(p, plantilla, tam, hook, foto) {
