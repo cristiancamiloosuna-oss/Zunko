@@ -26,7 +26,7 @@ function load() {
   s.pendientes = s.pendientes || [];
   s.tab = s.tab || 'calc';
   s.view = s.view || null;
-  s.productos.forEach(p => { p.pauta = Object.assign(pautaNueva(), p.pauta); });
+  s.productos.forEach(p => { p.pauta = Object.assign(pautaNueva(), p.pauta); p.venta = Object.assign(Landing.ventaNueva(), p.venta); p.fotos = p.fotos || []; });
   return s;
 }
 function save() {
@@ -105,11 +105,12 @@ function renderTabs() {
 function render() {
   renderPendiente = false;
   renderTabs();
-  document.body.classList.toggle('ancho', S.tab === 'prod' && !S.view);
+  document.body.classList.toggle('ancho', (S.tab === 'prod' && !S.view) || (S.tab === 'crear' && !S.view));
   const v = S.view && S.view.ficha ? vFicha : S.view && S.view.costeo ? vCalc
-    : ({ hoy: vHoy, prod: vTablero, calc: vCalc, ajustes: vAjustes }[S.tab] || vPronto);
+    : ({ hoy: vHoy, prod: vTablero, calc: vCalc, crear: vCrear, ajustes: vAjustes }[S.tab] || vHoy);
   $('#app').innerHTML = v();
   if (v === vCalc) pintarResultados();
+  if (v === vCrear) crearMontado();
 }
 const prod = id => S.productos.find(p => p.id === id);
 const header = (t, extra = '') => `<header class="top"><h1>${t}</h1>${extra}<span class="brand">zunk<b>o</b></span></header>`;
@@ -155,7 +156,7 @@ function nuevoProducto(nombre, link, costo) {
     proveedor: { link: link || '', stock: '' }, competencia: [], notas: '',
     angulo: '', hooks: [], fotosReales: false,
     costeo: costeoNuevo(S.ajustes), pauta: pautaNueva(),
-    decisiones: [{ fecha: t, texto: 'Entró al radar.' }], motivoDescarte: '',
+    decisiones: [{ fecha: t, texto: 'Entró al radar.' }], motivoDescarte: '', venta: Landing.ventaNueva(), fotos: [],
   };
   p.costeo.C = costo || '';
   S.productos.unshift(p);
@@ -282,6 +283,7 @@ function vFicha() {
   <section class="card resumen"><h2>Resumen</h2>
     <dl class="kv"><dt>Etapa</dt><dd>${nombreEtapa(p.etapa)} · ${dias(p.etapaDesde)} d</dd><dt>Costo</dt><dd>${+p.costeo.C ? money(+p.costeo.C) : '—'}</dd><dt>Precio final</dt><dd>${tiene ? money(+p.costeo.P) : '—'}</dd><dt>BREAKEVEN</dt><dd>${tiene ? money(r.breakeven) : '—'}</dd></dl>
     <button class="btn" style="width:100%;margin-top:14px" data-copiarprod="${p.id}">${ic('copy', 18)}Copiar para Claude</button>
+    <button class="btn sec" style="width:100%;margin-top:8px" data-landing="${p.id}">${ic('crear', 18)}Landing del producto</button>
     <div class="acts">${ant && p.etapa !== 'descartado' ? `<button class="btn sec" data-mover="${ant}">← ${nombreEtapa(ant)}</button>` : ''}${sig && p.etapa !== 'descartado' ? `<button class="btn sec" data-mover="${sig}">${nombreEtapa(sig)} →</button>` : ''}</div>
     ${p.etapa !== 'descartado' ? `<button class="lnk peligro" data-mover="descartado" style="margin-top:10px">Descartar producto</button>` : ''}
   </section>
@@ -486,6 +488,12 @@ function vAjustes() {
   ${f('E', 'Efectividad', '%')}${f('X', 'Cancelaciones', '%')}${f('CPA', 'CPA esperado', '$')}${f('I', 'Importe a proyectar', '$')}${f('A', 'Administrativos', '$')}${f('U', 'Fulfillment', '$')}</div>
   <p class="note">Efectividad 70% mientras no haya entregas propias (el curso usa 80%, optimista para un lanzamiento). Corrígela con datos reales a la semana de pautar. Los productos nuevos arrancan con estos supuestos.</p>
   <button class="btn sec" id="aplicar" style="width:100%;margin-top:12px">Llevar estos supuestos a la calculadora suelta</button></section>
+  <section class="card"><h2>Landings</h2>${(() => { const l = ajLanding(); const t = (k, lab, ph, tipo = 'text') => `<div class="f"><label for="ajl-${k}">${lab}</label><div class="inp"><input id="ajl-${k}" data-ajl="${k}" type="${tipo}" value="${esc(l[k])}" placeholder="${esc(ph)}" autocomplete="off"></div></div>`; return `<div class="grid">
+    <div class="full">${t('endpoint', 'Destino de los pedidos (URL de webhook: Dropi, Shopify, Make, Apps Script)', 'https://…', 'url')}</div>
+    ${t('whatsapp', 'WhatsApp de la tienda', '573001234567', 'tel')}${t('dominio', 'Dominio', 'tiendazunko.com')}
+    ${t('instagram', 'Instagram (solo si existe)', '@tiendazunko')}${t('tiktok', 'TikTok (solo si existe)', '@tiendazunko')}${t('facebook', 'Facebook (solo si existe)', 'tiendazunko')}</div>
+    <div class="f" style="margin-top:10px"><label for="ajl-marcas">Marcas prohibidas en el copy (separadas por coma)</label><textarea id="ajl-marcas" data-ajl="marcas" rows="3">${esc(l.marcas)}</textarea></div>
+    <p class="note">Sin destino de pedidos, la landing solo confirma en pantalla y el pedido no te llega. Las redes vacías no aparecen en el pie.</p>`; })()}</section>
   </div><div class="out">
   <section class="card"><h2>Copia de seguridad</h2>
   <p class="note" style="margin:0 0 12px">Tus datos viven solo en este navegador de este PC. Descarga una copia cada semana y guárdala en Drive. Sirve también para pasar todo a otro equipo.</p>
@@ -494,12 +502,11 @@ function vAjustes() {
   <input type="file" id="bk-file" accept="application/json,.json" hidden></section>
   </div></div>`;
 }
-function vPronto() {
-  return header('Crear') + `<div class="card vacio"><h2>En construcción</h2><p>Plantillas de creativos y generador de landings.</p></div>`;
-}
-function descargarCopia() {
+async function descargarCopia() {
   S.ultimaCopia = new Date().toISOString(); save();
-  const data = JSON.stringify({ app: 'zunko-mando', version: 1, fecha: S.ultimaCopia, datos: { ajustes: S.ajustes, calc: S.calc, productos: S.productos, pendientes: S.pendientes } }, null, 1);
+  const fotos = {};
+  for (const p of S.productos) for (const f of p.fotos || []) { const b = await Fotos.get(f.id); if (b) fotos[f.id] = await Fotos.aDataURL(b); }
+  const data = JSON.stringify({ app: 'zunko-mando', version: 2, fecha: S.ultimaCopia, datos: { ajustes: S.ajustes, calc: S.calc, productos: S.productos, pendientes: S.pendientes }, fotos });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
   a.download = `zunko-copia-${hoyISO()}.json`;
@@ -511,8 +518,10 @@ async function restaurar(file) {
   let j;
   try { j = JSON.parse(await file.text()); } catch (e) { toast('Ese archivo no es una copia válida'); return; }
   if (!j || j.app !== 'zunko-mando' || !j.datos || !Array.isArray(j.datos.productos)) { toast('Ese archivo no es una copia del Centro de mando'); return; }
-  const r = await pedir({ titulo: 'Restaurar copia', texto: `La copia es del ${fechaCorta(j.fecha)} y trae ${j.datos.productos.length} productos y ${(j.datos.pendientes || []).length} pendientes. <b>Reemplaza todo lo que hay ahora en este navegador.</b>`, ok: 'Reemplazar', peligro: true });
+  const nf = Object.keys(j.fotos || {}).length;
+  const r = await pedir({ titulo: 'Restaurar copia', texto: `La copia es del ${fechaCorta(j.fecha)} y trae ${j.datos.productos.length} productos, ${(j.datos.pendientes || []).length} pendientes y ${nf} fotos. <b>Reemplaza todo lo que hay ahora en este navegador.</b>`, ok: 'Reemplazar', peligro: true });
   if (!r) return;
+  for (const [id, durl] of Object.entries(j.fotos || {})) { try { await Fotos.put(id, await Fotos.deDataURL(durl)); } catch (e) {} }
   S = Object.assign(S, { ajustes: Object.assign({}, DEF, j.datos.ajustes), calc: j.datos.calc || costeoNuevo(DEF), productos: j.datos.productos, pendientes: j.datos.pendientes || [], view: null });
   save(); S = load(); render(); toast('Copia restaurada');
 }
@@ -544,6 +553,7 @@ document.addEventListener('click', async e => {
     const p = prod(d.borrarprod);
     const r = await pedir({ titulo: `Borrar ${p.nombre}`, texto: 'Se borra el producto con su costeo, hooks y decisiones. No se puede deshacer. Si solo no te sirve, mejor descártalo.', ok: 'Borrar', peligro: true });
     if (!r) return;
+    (p.fotos || []).forEach(f => Fotos.del(f.id).catch(() => {}));
     S.productos = S.productos.filter(x => x.id !== p.id);
     S.pendientes.forEach(x => { if (x.productoId === p.id) x.productoId = ''; });
     save(); ir('prod'); toast('Producto borrado'); return;
@@ -581,7 +591,7 @@ document.addEventListener('click', async e => {
     save(); ir('prod', { costeo: p.id }); toast('Costeo guardado en ' + p.nombre); return;
   }
   if (b.id === 'aplicar') { const a = S.ajustes; Object.assign(S.calc, { E: a.E, X: a.X, CPA: a.CPA, A: a.A, U: a.U, I: a.I }); S.calc.real = {}; save(); toast('Supuestos aplicados'); return; }
-  if (b.id === 'bk-down') { descargarCopia(); return; }
+  if (b.id === 'bk-down') { b.disabled = true; descargarCopia().finally(() => { b.disabled = false; }); return; }
   if (b.id === 'bk-up') { $('#bk-file').click(); return; }
 });
 
@@ -651,6 +661,8 @@ document.addEventListener('input', e => {
     save(); pintarResultados();
   } else if (el.id === 'in-m') {
     const c = CUR(), v = parse(el.value); c.m = v === '' ? 0 : Math.min(v, 95) / 100; save(); pintarResultados();
+  } else if (el.dataset.ajl) {
+    ajLanding()[el.dataset.ajl] = el.value.trim() === '' ? '' : el.value; save();
   } else if (el.dataset.aj) {
     const k = el.dataset.aj, isPct = k === 'E' || k === 'X';
     let v = parse(el.value); if (v === '') v = 0; if (isPct) v = Math.min(v, 100);

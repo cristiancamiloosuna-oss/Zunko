@@ -188,6 +188,23 @@ dialog h2{font:800 20px "Bricolage Grotesque",sans-serif;margin-bottom:12px}
 .tb tr.tot td{font-weight:600;border-bottom:0}
 .tb.reg input{width:100%;min-width:72px;text-align:right;border:1px solid transparent;background:var(--soft);border-radius:8px;padding:8px;font-weight:600;outline:none}
 .tb.reg input:focus{border-color:var(--action);background:var(--card)}
+/* ---- crear ---- */
+.seg2{display:inline-flex;background:var(--soft);border-radius:12px;padding:3px;gap:2px}
+.seg2 button{padding:7px 14px;border-radius:9px;font-size:14px;font-weight:600;color:var(--mute)}
+.seg2 button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+.foto{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.foto img{width:72px;height:72px;object-fit:cover;border-radius:10px;background:var(--soft);flex:none}
+.foto-d{flex:1;display:grid;gap:6px}.foto-d .inp{height:40px}
+.foto-c{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--mute)}
+.foto-c label{display:flex;align-items:center;gap:4px}.foto-c input{accent-color:var(--action)}
+.foto-a{display:flex;flex-direction:column}.foto-a .ib{width:32px;height:30px}
+.ib:disabled{opacity:.3}
+.faq-e{display:grid;grid-template-columns:1fr auto;gap:6px 6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.faq-e textarea{grid-column:1}.faq-e .ib{grid-row:1/3;grid-column:2}
+.prev{background:var(--soft);border-radius:14px;padding:10px;display:flex;justify-content:center}
+.prev iframe{border:0;background:#fff;border-radius:10px;height:720px;width:100%}
+.prev.cel iframe{width:390px;max-width:100%}
+label.btn input[type=file]{display:none}
 @media (max-width:360px){.grid{grid-template-columns:1fr}}
 .cols{display:block}
 .tabs .logo{display:none}
@@ -220,6 +237,9 @@ dialog h2{font:800 20px "Bricolage Grotesque",sans-serif;margin-bottom:12px}
 <dialog id="dlg"></dialog>
 <script src="calc.js"></script>
 <script src="pauta.js"></script>
+<script src="landing.js"></script>
+<script src="fotos.js"></script>
+<script src="crear.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
