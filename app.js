@@ -496,6 +496,11 @@ function vAjustes() {
     <div class="f" style="margin-top:10px"><label for="ajl-marcas">Marcas prohibidas en el copy (separadas por coma)</label><textarea id="ajl-marcas" data-ajl="marcas" rows="3">${esc(l.marcas)}</textarea></div>
     <p class="note">Sin destino de pedidos, la landing solo confirma en pantalla y el pedido no te llega. Las redes vacías no aparecen en el pie.</p>`; })()}</section>
   </div><div class="out">
+  <section class="card"><h2>Escenas con Gemini</h2>${(() => { const g = ajGemini(); return `
+    <p class="note" style="margin:0 0 10px">La app nunca guarda la clave de Gemini: habla con tu intermediario en Cloudflare, que la tiene guardada. Los pasos para montarlo están en el LEEME del repositorio.</p>
+    <div class="f"><label for="ajg-url">URL del intermediario</label><div class="inp"><input id="ajg-url" data-ajg="url" type="url" value="${esc(g.url)}" placeholder="https://zunko-gemini.TU-CUENTA.workers.dev" autocomplete="off"></div></div>
+    <div class="f" style="margin-top:10px"><label for="ajg-token">Clave de la app (la misma de APP_TOKEN en el Worker)</label><div class="inp"><input id="ajg-token" data-ajg="token" type="password" value="${esc(g.token)}" autocomplete="off"></div></div>
+    <button class="btn sec" id="g-probar" style="width:100%;margin-top:12px">Probar conexión</button>`; })()}</section>
   <section class="card"><h2>Copia de seguridad</h2>
   <p class="note" style="margin:0 0 12px">Tus datos viven solo en este navegador de este PC. Descarga una copia cada semana y guárdala en Drive. Sirve también para pasar todo a otro equipo.</p>
   <p class="note" style="margin:0 0 12px">${S.productos.length} productos · ${S.pendientes.length} pendientes${S.ultimaCopia ? ` · última copia ${fechaCorta(S.ultimaCopia)}` : ' · nunca has descargado una copia'}</p>
@@ -507,7 +512,7 @@ async function descargarCopia() {
   S.ultimaCopia = new Date().toISOString(); save();
   const fotos = {};
   for (const p of S.productos) for (const f of p.fotos || []) { const b = await Fotos.get(f.id); if (b) fotos[f.id] = await Fotos.aDataURL(b); }
-  const data = JSON.stringify({ app: 'zunko-mando', version: 2, fecha: S.ultimaCopia, datos: { ajustes: S.ajustes, calc: S.calc, productos: S.productos, pendientes: S.pendientes }, fotos });
+  const data = JSON.stringify({ app: 'zunko-mando', version: 2, fecha: S.ultimaCopia, datos: { ajustes: Object.assign({}, S.ajustes, { gemini: { url: (S.ajustes.gemini || {}).url || '', token: '' } }), calc: S.calc, productos: S.productos, pendientes: S.pendientes }, fotos });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
   a.download = `zunko-copia-${hoyISO()}.json`;

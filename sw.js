@@ -1,5 +1,5 @@
 // Centro de mando Zunko: funciona sin internet. Cambia V cuando publiques una versión nueva.
-const V='zunko-v6';
+const V='zunko-v7';
 const SHELL=['./','./index.html','./calc.js','./app.js','./pauta.js','./landing.js','./fotos.js','./creativos.js','./crear.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/favicon-32.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('zunko-')&&k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

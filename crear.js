@@ -60,6 +60,7 @@ function vCrear() {
       <div class="foto-d"><div class="inp"><input data-falt="${f.id}" value="${esc(f.alt || '')}" placeholder="Qué se ve (texto alternativo)" aria-label="Descripción de la foto ${i + 1}"></div>
       <div class="foto-c"><label><input type="checkbox" data-fflag="${f.id}|ia" ${f.ia ? 'checked' : ''}> Hecha con IA</label><label><input type="checkbox" data-fflag="${f.id}|render" ${f.render ? 'checked' : ''}> Render del catálogo</label><label><input type="checkbox" data-fflag="${f.id}|ingles" ${f.ingles ? 'checked' : ''}> Texto en inglés</label></div></div>
       <div class="foto-a"><button class="ib" data-fmov="${f.id}|-1" aria-label="Subir" ${i === 0 ? 'disabled' : ''}>↑</button><button class="ib" data-fmov="${f.id}|1" aria-label="Bajar" ${i === p.fotos.length - 1 ? 'disabled' : ''}>↓</button><button class="ib" data-fdel="${f.id}" aria-label="Borrar">${ic('x', 18)}</button></div>
+      <button class="btn sec chico escena" data-fescena="${f.id}" title="Poner este producto en otra escena con Gemini">✨ Escena</button>
     </div>`).join('') || '<p class="empty small">Sin fotos todavía.</p>'}</div>
     <label class="btn sec" style="width:100%;margin-top:10px;cursor:pointer">${ic('plus', 18)}Subir fotos<input type="file" id="c-subir" accept="image/*" multiple hidden></label>
   </section>
@@ -342,4 +343,72 @@ document.addEventListener('change', e => {
   const el = e.target, c = S.crear; if (!c || c.sub !== 'creativos') return;
   if (el.id === 'c-hook') { c.hook = +el.value; save(); pintarCreativo(); }
   if (el.id === 'c-foto') { c.foto = el.value; save(); pintarCreativo(); }
+});
+
+
+// ---------- Escenas con Gemini (vía intermediario en Cloudflare) ----------
+function ajGemini() { S.ajustes.gemini = Object.assign({ url: '', token: '' }, S.ajustes.gemini); return S.ajustes.gemini; }
+const ESCENAS = [
+  ['balcon', 'En el balcón de un apartamento', 'on the balcony of a Colombian apartment, with plants and city view'],
+  ['fachada', 'En la fachada o la reja de una casa', 'mounted on the front facade and metal gate of a typical Colombian house'],
+  ['antejardin', 'En el antejardín', 'in the small front garden of a Colombian house, among bushes and grass'],
+  ['sala', 'En la sala de una casa', 'in the living room of a modern, tidy Colombian home'],
+  ['cocina', 'En la cocina', 'on the counter of a clean, bright Colombian home kitchen'],
+  ['habitacion', 'En una habitación', 'in a cozy bedroom of a Colombian home'],
+  ['escritorio', 'En un escritorio', 'on a home office desk next to a laptop'],
+  ['noche', 'De noche, encendido o en uso', 'at night, turned on / in use, warm ambient light'],
+  ['estudio', 'Fondo limpio de estudio', 'on a clean, soft-colored studio background with soft shadows'],
+];
+function promptEscena(p, clave, extra) {
+  const e = ESCENAS.find(x => x[0] === clave) || ESCENAS[0];
+  return `Using the product shown in the attached photo (${p.nombre}), create a new realistic photo of this exact same product ${e[2]}. ` +
+    'Keep the product identical: same shape, colors, proportions, materials and details; do not add, remove or redesign any part. ' +
+    'Photorealistic smartphone-style photo, natural light, vertical 4:5 framing, the product clearly visible, in focus and at a believable real-world size. ' +
+    'No text, no letters, no logos, no brand names, no watermarks, no price tags.' + (extra ? ' Additional details: ' + extra : '');
+}
+async function generarEscena(p, fotoId) {
+  const g = ajGemini();
+  if (!g.url || !g.token) { toast('Primero configura el intermediario en Ajustes → Escenas con Gemini'); ir('ajustes'); return; }
+  const f = p.fotos.find(x => x.id === fotoId); if (!f) return;
+  const r = await pedir({ titulo: 'Escena con Gemini', texto: 'Gemini pone este mismo producto en otra escena. La foto nueva queda marcada como IA, y la landing y los creativos dirán «Imagen ilustrativa». Cada escena se cobra en tu cuenta de Gemini.', ok: 'Generar',
+    campos: [{ k: 'e', label: 'Escena', type: 'select', value: 'balcon', options: ESCENAS.map(x => [x[0], x[1]]) }, { k: 'x', label: 'Detalle extra (opcional, en español o inglés)', type: 'textarea' }] });
+  if (!r) return;
+  const btn = document.querySelector(`[data-fescena="${fotoId}"]`); if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  toast('Generando escena… puede tardar hasta un minuto');
+  try {
+    const blob = await Fotos.get(fotoId), b64 = (await Fotos.aDataURL(blob)).split(',')[1];
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 120000);
+    const res = await fetch(g.url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-App-Token': g.token }, body: JSON.stringify({ prompt: promptEscena(p, r.e, r.x), imagen: b64, mime: blob.type || 'image/jpeg' }), signal: ctl.signal });
+    clearTimeout(t);
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.imagen) throw new Error(j.error || 'El intermediario respondió ' + res.status);
+    const nueva = await Fotos.reducir(await Fotos.deDataURL(`data:${j.mime || 'image/png'};base64,${j.imagen}`));
+    const id = uid(); await Fotos.put(id, nueva);
+    const nombre = (ESCENAS.find(x => x[0] === r.e) || ESCENAS[0])[1];
+    p.fotos.splice(p.fotos.indexOf(f) + 1, 0, { id, alt: `${p.nombre} ${nombre.toLowerCase()}`, ia: true, render: false, ingles: false });
+    p.decisiones.push({ fecha: new Date().toISOString(), texto: `Escena con IA generada: ${nombre.toLowerCase()}.` });
+    save(); render(); toast('Escena lista: quedó después de la foto original');
+  } catch (err) {
+    toast(err.name === 'AbortError' ? 'Gemini tardó demasiado. Intenta de nuevo.' : err.message.includes('Failed to fetch') ? 'No se pudo conectar con el intermediario. Revisa la URL en Ajustes.' : err.message);
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Escena'; }
+  }
+}
+async function probarIntermediario() {
+  const g = ajGemini();
+  if (!g.url) { toast('Pega primero la URL del intermediario'); return; }
+  try {
+    const res = await fetch(g.url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-App-Token': g.token }, body: '{}' });
+    const j = await res.json().catch(() => ({}));
+    if (res.status === 400) toast('Conexión correcta: el intermediario responde y la clave de la app coincide.');
+    else toast(j.error || 'Respuesta inesperada: ' + res.status);
+  } catch (e) { toast('No se pudo conectar: revisa la URL y ALLOWED_ORIGIN en el Worker.'); }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !b.closest('#app')) return;
+  if (b.dataset.fescena) { const p = cp(); if (p) generarEscena(p, b.dataset.fescena); }
+  if (b.id === 'g-probar') probarIntermediario();
+});
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.dataset.ajg) return;
+  ajGemini()[el.dataset.ajg] = el.value.trim(); save();
 });
