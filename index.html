@@ -34,7 +34,7 @@
 *{box-sizing:border-box;min-width:0}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
-button,input{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
 :focus-visible{outline:2px solid var(--action);outline-offset:2px}
 h1,h2,h3,p{margin:0}
@@ -95,6 +95,80 @@ h1,h2,h3,p{margin:0}
 .vacio h2{font:800 20px "Bricolage Grotesque",sans-serif;color:var(--ink);margin-bottom:8px}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
+
+/* ---- piezas comunes ---- */
+.ib{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:var(--mute);flex:none}
+.ib:hover{background:var(--soft);color:var(--ink)}
+.lnk{color:var(--acc);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.lnk.peligro,.peligro.lnk{color:var(--bad)}
+.btn.peligro{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.mute{color:var(--mute);font-weight:400}
+textarea{width:100%;border:1px solid transparent;background:var(--soft);border-radius:12px;padding:10px 12px;resize:vertical;outline:none}
+textarea:focus{border-color:var(--action);background:var(--card)}
+.inp select{flex:1;border:0;background:none;outline:none;height:100%;font-weight:600}
+.inp input[type=date],.inp input[type=datetime-local],.inp input[type=url],.inp input[type=text],.inp input[type=number]{font-size:15px}
+.empty{color:var(--mute);font-size:15px;padding:6px 0}
+.empty.small{font-size:14px}
+.sub{font-size:14px;font-weight:600;margin:16px 0 6px;display:flex;gap:8px;align-items:baseline}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.acts .btn{flex:1}
+.addrow{display:flex;align-items:center;gap:6px;color:var(--acc);font-weight:600;padding:10px 0}
+.addp{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.addp .grow{flex:1 1 200px}
+.addp .btn{width:46px;padding:0}
+.lrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line)}
+.lrow>span:not(.dot):not(.hk){flex:1}
+.lrow b{font-weight:600;display:block;overflow-wrap:anywhere}
+.lrow b a{color:inherit;display:inline-flex;align-items:center;gap:4px}
+.lrow small{display:block;color:var(--mute);font-size:13px}
+.hk{width:24px;height:24px;border-radius:50%;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none}
+.prow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.prow input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--action);flex:none}
+.prow>span{flex:1}.prow b{font-weight:600;display:block}.prow small{color:var(--mute);font-size:13px}
+.prow.hecho b{text-decoration:line-through;color:var(--mute)}
+.hechos{margin-top:12px;color:var(--mute);font-size:14px}.hechos summary{cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;font-size:15px;height:46px}
+.check input{width:20px;height:20px;accent-color:var(--action)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.dot.verde{background:var(--ok)}.dot.ambar{background:var(--action)}.dot.rojo{background:var(--bad)}
+.aviso{background:var(--warnbg);color:var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14px}
+.aviso.ok{background:var(--okbg);color:var(--ok)}
+.etapas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.etapa{background:var(--soft);border-radius:12px;padding:12px 6px;text-align:center}
+.etapa b{display:block;font:800 26px "Bricolage Grotesque",sans-serif}.etapa span{font-size:13px;color:var(--mute)}
+.decs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;font-size:14px}
+.decs small{display:block;color:var(--mute);font-size:12px}
+/* ---- tablero ---- */
+.top .btn{height:40px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,82%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.colk{scroll-snap-align:start;background:var(--soft);border-radius:16px;padding:12px;min-height:200px;border:2px dashed transparent}
+.colk.sobre{border-color:var(--action)}
+.colk h2{font-size:14px;font-weight:600;margin:2px 4px 10px;display:flex;justify-content:space-between}
+.colk h2 span{color:var(--mute)}
+.colk.descartado{opacity:.75}
+.tk{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:var(--sh)}
+.tk:hover{border-color:var(--acc)}
+.tk.drag{opacity:.4}
+.tk-h{display:flex;align-items:center;gap:8px}.tk-h b{font-weight:600}
+.tk-m{font-size:13px;color:var(--mute)}.tk-m b{color:var(--ink)}
+/* ---- ficha ---- */
+.editable{flex:1}
+.editable input{width:100%;border:0;background:none;font:inherit;letter-spacing:inherit;outline:none;border-bottom:2px solid transparent}
+.editable input:focus{border-bottom-color:var(--action)}
+.stepper{display:flex;gap:4px;margin-bottom:14px}
+.stepper button{flex:1;font-size:13px;font-weight:600;padding:8px 4px;border-radius:10px;background:var(--soft);color:var(--mute)}
+.stepper button.done{color:var(--ink)}
+.stepper button.on{background:var(--ink);color:var(--bg)}
+/* ---- diálogo ---- */
+dialog{border:0;border-radius:18px;padding:20px;width:min(440px,calc(100vw - 32px));background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgb(0 0 0/.3)}
+dialog::backdrop{background:rgb(0 0 0/.4)}
+dialog h2{font:800 20px "Bricolage Grotesque",sans-serif;margin-bottom:12px}
+.dlg-act{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+@media (min-width:900px){
+  body.ancho #app{max-width:1500px}
+  .board{grid-auto-flow:row;grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible;margin:0;padding:0}
+  .resumen{position:static}
+}
 @media (max-width:360px){.grid{grid-template-columns:1fr}}
 .cols{display:block}
 .tabs .logo{display:none}
@@ -113,7 +187,7 @@ h1,h2,h3,p{margin:0}
   .tabs button:hover{background:var(--soft)}
   .tabs button[aria-current="page"]{background:var(--soft)}
   .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
-  .cols>.out{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding-right:4px}
+  .cols.fija>.out{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding-right:4px}
   .grid{grid-template-columns:1fr 1fr}
   .toast{bottom:24px;left:calc(50% + 110px)}
 }
@@ -124,212 +198,8 @@ h1,h2,h3,p{margin:0}
 <div id="app"></div>
 <nav class="tabs" aria-label="Secciones"><div id="tabs"></div></nav>
 <div class="toast" id="toast" role="status"></div>
+<dialog id="dlg"></dialog>
 <script src="calc.js"></script>
-<script>
-'use strict';
-const LSK = 'zunko-mando-v1';
-const DEF = { E: 70, X: 20, CPA: 20000, A: 0, U: 0, I: 560000 }; // I: 7 días a $80.000
-let S = load();
-
-function load() {
-  let s = null;
-  try { s = JSON.parse(localStorage.getItem(LSK)); } catch (e) {}
-  s = s || {};
-  s.ajustes = Object.assign({}, DEF, s.ajustes);
-  s.calc = Object.assign({ C: '', F: '', E: s.ajustes.E, X: s.ajustes.X, A: s.ajustes.A, U: s.ajustes.U, CPA: s.ajustes.CPA, P: '', I: s.ajustes.I, m: 0.2, real: {} }, s.calc);
-  s.tab = s.tab || 'calc';
-  return s;
-}
-function save() { try { localStorage.setItem(LSK, JSON.stringify(S)); } catch (e) {} }
-
-const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = v => (v < 0 ? '−$' : '$') + Math.round(Math.abs(v)).toLocaleString('es-CO');
-const neg = t => t.replace(/^-/, '−');
-const pct = v => neg(Math.round(v * 100).toLocaleString('es-CO')) + '%';
-const dec = (v, d = 2) => neg(v.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d }));
-const fmtIn = v => (v === '' || v == null ? '' : Number(v).toLocaleString('es-CO'));
-const parse = s => { const d = String(s).replace(/[^\d]/g, ''); return d === '' ? '' : Number(d); };
-const sgn = v => (v < 0 ? 'neg' : v > 0 ? 'pos' : '');
-
-const IC = {
-  hoy: '<path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="4"/>',
-  prod: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
-  calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/>',
-  crear: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/>',
-  ajustes: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
-};
-const ic = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
-const TABS = [['hoy', 'Hoy'], ['prod', 'Productos'], ['calc', 'Calcular'], ['crear', 'Crear'], ['ajustes', 'Ajustes']];
-
-function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 1800); }
-
-function renderTabs() {
-  $('#tabs').innerHTML = '<span class="logo">zunk<b>o</b></span>' + TABS.map(([id, n]) => `<button data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>${ic(id)}${n}</button>`).join('');
-}
-
-function render() {
-  renderTabs();
-  const v = { calc: vCalc, ajustes: vAjustes }[S.tab] || vPronto;
-  $('#app').innerHTML = v();
-  if (S.tab === 'calc') pintarResultados();
-}
-
-// ---------- Calcular ----------
-const CAMPOS = [
-  ['C', 'Precio proveedor', '$', 'money'],
-  ['F', 'Flete base', '$', 'money', 'real'],
-  ['E', 'Efectividad', '%', 'pct', 'real'],
-  ['X', 'Cancelaciones', '%', 'pct', 'real'],
-  ['CPA', 'CPA Ads', '$', 'money', 'real'],
-  ['A', 'Administrativos', '$', 'money'],
-  ['U', 'Fulfillment', '$', 'money'],
-  ['I', 'Importe a gastar', '$', 'money'],
-];
-const TAGTXT = { F: ['estimado', 'cotizado'], E: ['supuesto', 'real'], X: ['supuesto', 'real'], CPA: ['esperado', 'real'] };
-
-function campo([k, label, u, tipo, tag]) {
-  const val = S.calc[k];
-  const t = tag ? `<button class="tag ${S.calc.real[k] ? 'real' : ''}" data-real="${k}" aria-pressed="${!!S.calc.real[k]}" title="Tocar para cambiar">${TAGTXT[k][S.calc.real[k] ? 1 : 0]}</button>` : '';
-  return `<div class="f"><label for="in-${k}">${label}${t}</label><div class="inp">${u === '$' ? '<span>$</span>' : ''}<input id="in-${k}" data-k="${k}" inputmode="numeric" autocomplete="off" value="${esc(tipo === 'money' ? fmtIn(val) : val)}" placeholder="0">${u === '%' ? '<span>%</span>' : ''}</div></div>`;
-}
-
-function vCalc() {
-  const fallas = Calc.autoprueba();
-  return `<header class="top"><h1>Calculadora de precio</h1><span class="brand">zunk<b>o</b></span></header>
-  ${fallas.length ? `<div class="alerta" role="alert"><b>La calculadora no cuadra con el ejemplo de la hoja.</b> No confíes en estos números.<br>${fallas.map(esc).join('<br>')}</div>` : ''}
-  <div class="cols"><div class="in">
-  <section class="card"><h2>Entradas</h2><div class="grid">${CAMPOS.map(campo).join('')}</div>
-  <p class="note">Toca la etiqueta de un dato para marcarlo como real o como supuesto.</p></section>
-  <section class="card"><h2>1 · Precio sugerido</h2><div class="chips" id="sug"></div>
-  <div class="row" style="margin-top:10px"><div class="f"><label for="in-m">Margen propio</label><div class="inp"><input id="in-m" inputmode="numeric" value="${Math.round(S.calc.m * 100)}"><span>%</span></div></div></div></section>
-  <section class="card"><h2>2 · Precio final</h2><div class="row"><div class="f"><label for="in-P">Precio al que vas a vender</label><div class="inp"><span>$</span><input id="in-P" data-k="P" inputmode="numeric" value="${esc(fmtIn(S.calc.P))}" placeholder="89.900"></div></div><button class="btn sec" id="redondear">Usar sugerido</button></div>
-  <p class="note" id="nota-p"></p></section>
-  </div><div class="out" id="res"></div></div>`;
-}
-
-function pintarResultados() {
-  const c = S.calc;
-  const inp = { C: c.C, F: c.F, E: (+c.E || 0) / 100, X: (+c.X || 0) / 100, A: c.A, U: c.U, CPA: c.CPA, P: c.P, I: c.I };
-  const r = Calc.calcular(inp);
-  const sug = Calc.precioComercial(r.sugerido(c.m));
-  $('#sug').innerHTML = [0.15, 0.2, 0.25].map(m => `<button class="chip" data-m="${m}" aria-pressed="${Math.abs(c.m - m) < 1e-9}"><small>${pct(m)} de margen</small><b>${money(r.sugerido(m))}</b></button>`).join('');
-  $('#redondear').textContent = sug ? 'Usar ' + money(sug) : 'Usar sugerido';
-  $('#redondear').disabled = !sug;
-  const P = +c.P || 0;
-  $('#nota-p').innerHTML = `Calculado con un CPA de <b>${money(+c.CPA || 0)}</b> (${TAGTXT.CPA[c.real.CPA ? 1 : 0]}).` + (P ? ` Margen real con este precio: <b class="${sgn(r.margenReal)}">${pct(r.margenReal)}</b>.` : '');
-
-  if (!P || !(+c.C)) {
-    $('#res').innerHTML = `<div class="card vacio" style="padding:24px 12px"><p>Llena el precio proveedor y el precio final para ver el BREAKEVEN.</p></div>`;
-    return;
-  }
-  const sem = Calc.semaforo(r.breakeven);
-  const msg = {
-    rojo: 'Por debajo de $15.000 no aguanta pauta en Meta Colombia. Sube el precio o descártalo.',
-    ambar: 'Justo en el rango del CPA de mercado ($15.000–20.000). Hay poco aire.',
-    verde: 'Por encima de $20.000: hay espacio para pautar.',
-  }[sem];
-  const tope = Math.max(P, r.costos);
-  const seg = [
-    ['Proveedor', +c.C, '--s1'], ['Flete con devoluciones', r.fleteDev, '--s2'],
-    ['Admin. y fulfillment', (+c.A || 0) + (+c.U || 0), '--s3'], ['CPA real', r.cpaReal, '--s4'],
-  ];
-  if (r.utilEnt > 0) seg.push(['Utilidad', r.utilEnt, '--s5']);
-  const peor = seg.slice(0, 4).filter(s => s[0] !== 'Admin. y fulfillment').sort((a, b) => b[1] - a[1])[0];
-  const o = r.op;
-  $('#res').innerHTML = `
-  <section class="be ${sem}" aria-live="polite"><small>BREAKEVEN · CPA techo</small><strong>${money(r.breakeven)}</strong><p>${msg} Es lo máximo que puedes pagar por pedido en el Ads Manager sin perder plata.</p></section>
-  <section class="card"><h2>3 · A dónde se va el precio</h2>
-  <div class="bar" role="img" aria-label="Reparto del precio">${seg.filter(s => s[1] > 0).map(s => `<i style="width:${s[1] / tope * 100}%;background:var(${s[2]})"></i>`).join('')}${r.costos > P ? `<span class="cien" style="left:${P / tope * 100}%"></span>` : ''}</div>
-  <ul class="leg">${seg.filter(s => s[1] > 0 || s[0] !== 'Admin. y fulfillment').map(s => `<li><span class="d" style="background:var(${s[2]})"></span><span>${s[0]}</span><b>${money(s[1])}</b><em>${pct(s[1] / P)}</em></li>`).join('')}
-  <li><span class="d"></span><span><b>Costos totales</b></span><b class="${r.costos > P ? 'neg' : ''}">${money(r.costos)}</b><em>${pct(r.pct.costos)}</em></li></ul>
-  <p class="note">${r.costos > P ? `Los costos pasan del 100% del precio: <b>a este CPA pierdes plata en cada entrega</b>. ` : ''}El que más pesa es <b>${peor[0].toLowerCase()}</b> (${pct(peor[1] / P)} del precio).</p></section>
-  <section class="card"><h2>4 · Por pedido</h2><dl class="kv">
-  <dt>Utilidad por entregado</dt><dd class="${sgn(r.utilEnt)}">${money(r.utilEnt)}</dd>
-  <dt>Utilidad por pedido en Shopify</dt><dd class="${sgn(r.utilTom)}">${money(r.utilTom)}</dd>
-  <dt>ROAS neto real</dt><dd class="${sgn(r.roasNeto)}">${dec(r.roasNeto)}</dd>
-  <dt>Precio de comparación (tachado)</dt><dd>${money(r.comparacion)}</dd>
-  <dt>Ahorro que se muestra</dt><dd>${money(r.ahorro)}</dd>
-  <dt>Factor (entregas × confirmados)</dt><dd>${pct(r.factor)}</dd></dl></section>
-  <section class="card"><h2>5 · Si gastas ${money(+c.I || 0)}</h2><dl class="kv">
-  <dt>Pedidos totales</dt><dd>${dec(o.pedidos, 1)}</dd>
-  <dt>Despachados</dt><dd>${dec(o.desp, 1)}</dd>
-  <dt>Entregados</dt><dd>${dec(o.ent, 1)}</dd>
-  <dt>Facturación</dt><dd>${money(o.facturacion)}</dd>
-  <dt>Valor entregado (ingreso real)</dt><dd>${money(o.valEnt)}</dd>
-  <dt>CPA real por entregado</dt><dd>${money(o.cpaReal)} · ${pct(o.cpaRealPct)}</dd>
-  <dt>Utilidad neta</dt><dd class="${sgn(o.utilNeta)}">${money(o.utilNeta)}</dd>
-  <dt>ROAS neto real</dt><dd class="${sgn(o.roasNeto)}">${dec(o.roasNeto)}</dd></dl></section>
-  <button class="btn sec" id="copiar" style="width:100%;margin-bottom:12px">Copiar resumen para Claude</button>`;
-}
-
-function resumen() {
-  const c = S.calc, inp = { C: c.C, F: c.F, E: c.E / 100, X: c.X / 100, A: c.A, U: c.U, CPA: c.CPA, P: c.P, I: c.I };
-  const r = Calc.calcular(inp), t = k => (c.real[k] ? 'real' : 'supuesto');
-  return [
-    'Costeo (Calculadora 2026):',
-    `Proveedor ${money(+c.C)} · Flete ${money(+c.F)} (${c.real.F ? 'cotizado' : 'estimado'}) · Efectividad ${c.E}% (${t('E')}) · Cancelaciones ${c.X}% (${t('X')}) · CPA ${money(+c.CPA)} (${c.real.CPA ? 'real' : 'esperado'}) · Admin ${money(+c.A)} · Fulfillment ${money(+c.U)}`,
-    `Precio final ${money(+c.P)} · tachado ${money(r.comparacion)} · margen real ${pct(r.margenReal)}`,
-    `BREAKEVEN ${money(r.breakeven)} · utilidad x entregado ${money(r.utilEnt)} · x pedido Shopify ${money(r.utilTom)}`,
-    `% del precio: proveedor ${pct(r.pct.C)}, flete c/dev ${pct(r.pct.fleteDev)}, CPA real ${pct(r.pct.cpaReal)}, costos ${pct(r.pct.costos)}`,
-    `Con ${money(+c.I)}: ${dec(r.op.ent, 1)} entregados, utilidad neta ${money(r.op.utilNeta)}, ROAS neto ${dec(r.op.roasNeto)}`,
-  ].join('\n');
-}
-
-// ---------- Ajustes ----------
-function vAjustes() {
-  const a = S.ajustes;
-  const f = (k, l, u) => `<div class="f"><label for="aj-${k}">${l}</label><div class="inp">${u === '$' ? '<span>$</span>' : ''}<input id="aj-${k}" data-aj="${k}" inputmode="numeric" value="${esc(u === '$' ? fmtIn(a[k]) : a[k])}">${u === '%' ? '<span>%</span>' : ''}</div></div>`;
-  return `<header class="top"><h1>Ajustes</h1><span class="brand">zunk<b>o</b></span></header>
-  <section class="card"><h2>Supuestos por defecto</h2><div class="grid">
-  ${f('E', 'Efectividad', '%')}${f('X', 'Cancelaciones', '%')}${f('CPA', 'CPA esperado', '$')}${f('I', 'Importe a proyectar', '$')}${f('A', 'Administrativos', '$')}${f('U', 'Fulfillment', '$')}</div>
-  <p class="note">Efectividad 70% mientras no haya entregas propias (el curso usa 80%, optimista para un lanzamiento). Corrígela con datos reales a la semana de pautar.</p>
-  <button class="btn sec" id="aplicar" style="width:100%;margin-top:12px">Llevar estos supuestos a la calculadora</button></section>`;
-}
-
-function vPronto() {
-  const t = { hoy: ['Hoy', 'Alertas de pauta y pendientes del día.'], prod: ['Productos', 'Tablero Radar → Testeo → Costeo → Pauta y la ficha de cada producto.'], crear: ['Crear', 'Plantillas de creativos y generador de landings.'] }[S.tab];
-  return `<header class="top"><h1>${t[0]}</h1><span class="brand">zunk<b>o</b></span></header><div class="card vacio"><h2>En construcción</h2><p>${t[1]}</p></div>`;
-}
-
-// ---------- Eventos ----------
-document.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.tab) { S.tab = b.dataset.tab; save(); render(); scrollTo(0, 0); return; }
-  if (b.dataset.real) { const k = b.dataset.real; S.calc.real[k] = !S.calc.real[k]; save(); b.classList.toggle('real', S.calc.real[k]); b.setAttribute('aria-pressed', S.calc.real[k]); b.textContent = TAGTXT[k][S.calc.real[k] ? 1 : 0]; pintarResultados(); return; }
-  if (b.dataset.m) { S.calc.m = +b.dataset.m; $('#in-m').value = Math.round(S.calc.m * 100); save(); pintarResultados(); return; }
-  if (b.id === 'redondear') {
-    const c = S.calc, r = Calc.calcular({ C: c.C, F: c.F, E: c.E / 100, X: c.X / 100, A: c.A, U: c.U, CPA: c.CPA, P: 0 });
-    c.P = Calc.precioComercial(r.sugerido(c.m)); $('#in-P').value = fmtIn(c.P); save(); pintarResultados(); return;
-  }
-  if (b.id === 'copiar') { navigator.clipboard.writeText(resumen()).then(() => toast('Resumen copiado'), () => toast('No se pudo copiar')); return; }
-  if (b.id === 'aplicar') { const a = S.ajustes; Object.assign(S.calc, { E: a.E, X: a.X, CPA: a.CPA, A: a.A, U: a.U, I: a.I }); S.calc.real = {}; save(); toast('Supuestos aplicados'); return; }
-});
-
-document.addEventListener('input', e => {
-  const el = e.target;
-  if (el.dataset.k) {
-    const k = el.dataset.k, isPct = k === 'E' || k === 'X';
-    let v = parse(el.value);
-    if (isPct && v !== '') v = Math.min(v, 100);
-    S.calc[k] = v;
-    if (!isPct) { // reformatea con puntos de miles sin perder el cursor al final
-      const atEnd = el.selectionStart === el.value.length;
-      el.value = fmtIn(v);
-      if (atEnd) el.setSelectionRange(el.value.length, el.value.length);
-    } else el.value = v;
-    save(); pintarResultados();
-  } else if (el.id === 'in-m') {
-    const v = parse(el.value); S.calc.m = v === '' ? 0 : Math.min(v, 95) / 100; save(); pintarResultados();
-  } else if (el.dataset.aj) {
-    const k = el.dataset.aj, isPct = k === 'E' || k === 'X';
-    let v = parse(el.value); if (v === '') v = 0; if (isPct) v = Math.min(v, 100);
-    S.ajustes[k] = v; if (!isPct) el.value = fmtIn(v); save();
-  }
-});
-
-render();
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
-</script>
+<script src="app.js"></script>
 </body>
 </html>

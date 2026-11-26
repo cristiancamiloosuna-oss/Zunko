@@ -2,7 +2,8 @@
 
 App instalable para manejar la tienda: productos por etapa, calculadora de precio (Calculadora 2026 del curso), creativos y landings. Sin servidor: los datos se guardan en el celular.
 
-- `index.html`: la app.
+- `index.html`: la app (estructura y estilos).
+- `app.js`: pantallas y lógica (tablero, ficha, pendientes, copia de seguridad).
 - `calc.js`: las fórmulas de la calculadora. Prueba: `node test-calc.js` (debe decir «el ejemplo de la hoja cuadra»).
 - `docs/centro-de-mando-zunko.md`: la especificación de pantallas, plantillas y landings.
 
